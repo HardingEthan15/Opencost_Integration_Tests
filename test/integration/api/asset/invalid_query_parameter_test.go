@@ -38,7 +38,7 @@ func TestAllocationInvalidParameters(t *testing.T) {
 
 	for _, tc := range invalidWindowTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Logf("Testing: %s - %s", tc.name)
+			t.Logf("Testing: %s", tc.name)
 
 			_, err := apiObj.GetAssets(api.AssetsRequest{
 				Window: tc.window,
