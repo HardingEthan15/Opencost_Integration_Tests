@@ -11,7 +11,7 @@ import (
 	"github.com/opencost/opencost-integration-tests/pkg/api"
 )
 
-func TestAllocationInvalidParameters(t *testing.T) {
+func TestAssetInvalidParameters(t *testing.T) {
 	apiObj := api.NewAPI()
 
 	invalidWindowTestCases := []struct {
