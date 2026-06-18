@@ -14,7 +14,7 @@ import (
 func TestAllocationInvalidParameters(t *testing.T) {
 	apiObj := api.NewAPI()
 
-	invalidWindowTestCases := []struct {
+	invalidParameterTestCases := []struct {
 		name        string
 		window      string
 		filter      string
@@ -63,7 +63,7 @@ func TestAllocationInvalidParameters(t *testing.T) {
 		},
 	}
 
-	for _, tc := range invalidWindowTestCases {
+	for _, tc := range invalidParameterTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Logf("Testing: %s", tc.name)
 
