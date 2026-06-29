@@ -10,6 +10,7 @@ import (
 //
 //	GET  /healthz   — unauthenticated liveness
 //	GET  /v1/pods   — list OpenCost pods (wait-for-ready)
+//	GET  /v1/nodes  — list trimmed node facts (asset ground-truth)
 //	POST /v1/restart — trigger rolling restart of OpenCost
 //	GET  /v1/chaos — list allowlisted chaos scenarios
 //	POST /v1/chaos/{scenario} — inject one allowlisted chaos scenario
@@ -30,6 +31,16 @@ func newMux(cfg Config, k8s *K8sClient) *http.ServeMux {
 				return
 			}
 			writeJSON(w, http.StatusOK, map[string]any{"pods": pods})
+		}))
+
+	mux.HandleFunc("GET /v1/nodes", requireToken(cfg.AuthToken,
+		func(w http.ResponseWriter, r *http.Request) {
+			nodes, err := k8s.NodeFacts(r.Context())
+			if err != nil {
+				writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"nodes": nodes})
 		}))
 
 	mux.HandleFunc("POST /v1/restart", requireToken(cfg.AuthToken,

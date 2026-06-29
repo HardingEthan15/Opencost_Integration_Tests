@@ -1,0 +1,24 @@
+# Nodes are a cluster-scoped resource, so they CANNOT be granted by the
+# namespaced Role in role.yaml — they require a ClusterRole + ClusterRoleBinding.
+# Keep this scoped to read-only verbs on the single resource /v1/nodes needs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ops-broker-nodes
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ops-broker-nodes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ops-broker-nodes
+subjects:
+  - kind: ServiceAccount
+    name: ops-broker
+    namespace: opencost

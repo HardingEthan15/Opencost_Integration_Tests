@@ -18,6 +18,7 @@ const (
 
 	pathHealthz = "/healthz"
 	pathChaos   = "/v1/chaos"
+	pathNodes   = "/v1/nodes"
 	pathPods    = "/v1/pods"
 	pathRestart = "/v1/restart"
 )
@@ -33,6 +34,15 @@ type Pod struct {
 	Phase        string `json:"phase"`
 	Ready        bool   `json:"ready"`
 	RestartCount int    `json:"restartCount"`
+}
+
+// Node is the trimmed node view the broker returns for asset ground-truth
+// tests. cpu/ram are the raw Kubernetes resource.Quantity strings (e.g. "4",
+// "16331252Ki") — not normalized, and never raw k8s Node objects.
+type Node struct {
+	Name string `json:"name"`
+	CPU  string `json:"cpu"`
+	RAM  string `json:"ram"`
 }
 
 type ChaosScenario struct {
@@ -56,6 +66,10 @@ type restartResponse struct {
 
 type podsResponse struct {
 	Pods []Pod `json:"pods"`
+}
+
+type nodesResponse struct {
+	Nodes []Node `json:"nodes"`
 }
 
 type chaosScenariosResponse struct {
@@ -131,6 +145,14 @@ func (c *Client) Pods(ctx context.Context) ([]Pod, error) {
 		return nil, err
 	}
 	return response.Pods, nil
+}
+
+func (c *Client) Nodes(ctx context.Context) ([]Node, error) {
+	var response nodesResponse
+	if err := c.do(ctx, http.MethodGet, pathNodes, true, nil, &response); err != nil {
+		return nil, err
+	}
+	return response.Nodes, nil
 }
 
 func (c *Client) ChaosScenarios(ctx context.Context) ([]ChaosScenario, error) {

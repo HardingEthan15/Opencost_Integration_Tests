@@ -8,6 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -110,6 +111,42 @@ func (c *K8sClient) PodStatus(ctx context.Context) ([]PodInfo, error) {
 			Phase:        string(p.Status.Phase),
 			Ready:        podReady(p),
 			RestartCount: totalRestarts(p),
+		})
+	}
+	return out, nil
+}
+
+// NodeInfo is the trimmed node view the broker returns (not raw k8s objects).
+type NodeInfo struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+	CPU  string `json:"cpu"`
+	RAM  string `json:"ram"`
+	GPU  string `json:"gpu"`
+}
+
+// gpuResourceName is the conventional extended-resource key NVIDIA's device
+// plugin advertises on node capacity. Nodes without GPUs simply don't have it.
+const gpuResourceName = "nvidia.com/gpu"
+
+// NodeFacts lists trimmed node capacity for asset ground-truth tests. Nodes are
+// cluster-scoped, so this needs a ClusterRole (deploy/ops-broker/clusterrole-nodes.yaml),
+// not the namespaced Role used by pods/deployments. cpu/ram are the raw
+// resource.Quantity strings from node capacity — no normalization, no caller input.
+func (c *K8sClient) NodeFacts(ctx context.Context) ([]NodeInfo, error) {
+	nodes, err := c.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("listing nodes: %w", err)
+	}
+
+	out := make([]NodeInfo, 0, len(nodes.Items))
+	for _, n := range nodes.Items {
+		out = append(out, NodeInfo{
+			Name: n.Name,
+			ID:   n.Spec.ProviderID,
+			CPU:  n.Status.Capacity.Cpu().String(),
+			RAM:  n.Status.Capacity.Memory().String(),
+			GPU:  n.Status.Capacity.Name(gpuResourceName, resource.DecimalSI).String(),
 		})
 	}
 	return out, nil

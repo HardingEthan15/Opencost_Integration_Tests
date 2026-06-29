@@ -209,11 +209,17 @@ Response:
     {
       "name": "node-1",
       "cpu": "4",
-      "ram": "16Gi"
+      "ram": "16331252Ki"
     }
   ]
 }
 ```
+
+`cpu` and `ram` are the raw Kubernetes `resource.Quantity` strings read from
+node **capacity** (not allocatable), passed through unnormalized. Memory is
+therefore reported in the unit Kubernetes uses (commonly `Ki`), e.g.
+`"16331252Ki"` — not a rounded `"16Gi"`. Consumers should parse these as
+quantities rather than string-matching a specific unit.
 
 Validation:
 
@@ -223,6 +229,11 @@ Validation:
 RBAC:
 
 - `get`, `list` on `nodes`
+- Nodes are **cluster-scoped**, so this grant cannot live in the namespaced
+  `Role` (`deploy/ops-broker/role.yaml`). It requires a `ClusterRole` +
+  `ClusterRoleBinding` (`deploy/ops-broker/clusterrole-nodes.yaml`). General
+  rule: namespaced resources → `role.yaml`; cluster-scoped resources → a
+  dedicated `ClusterRole` file.
 
 ### `GET /v1/pods`
 
